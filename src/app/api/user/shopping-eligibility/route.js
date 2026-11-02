@@ -79,6 +79,12 @@ export async function GET(request) {
       select: { id: true, totalAmount: true, createdAt: true, status: true, paymentStatus: true }
     });
 
+    // An order is active if it hasn't been cancelled or rejected
+    const activeOrders = existingOrders.filter(
+      order => order.status !== 'cancelled' && order.status !== 'rejected'
+    );
+    const hasOrdered = activeOrders.length > 0;
+    const canOrder = !hasOrdered;
     const hasShopped = existingOrders.length > 0;
     const totalSpent = existingOrders.reduce((sum, order) => sum + parseFloat(order.totalAmount), 0);
 
@@ -88,6 +94,8 @@ export async function GET(request) {
       return NextResponse.json({
         success: true,
         eligible: true,
+        hasOrdered,
+        canOrder,
         reason: 'no_package_shopping',
         message: 'You can shop and send payment proof. Amount will be added to your account after approval.',
         user: {
@@ -98,9 +106,12 @@ export async function GET(request) {
         package: null,
         shopping: {
           hasShopped,
+          hasOrdered,
+          canOrder,
           totalSpent,
           remainingAmount: null, // No limit for users without packages
           orderCount: existingOrders.length,
+          activeOrderCount: activeOrders.length,
           shoppingType: 'payment_proof_required'
         }
       });
@@ -118,6 +129,8 @@ export async function GET(request) {
         return NextResponse.json({
           success: true,
           eligible: true,
+          hasOrdered,
+          canOrder,
           reason: 'balance_payment_shopping',
           message: 'You subscribed from balance. You can shop with payment proof.',
           user: {
@@ -133,9 +146,12 @@ export async function GET(request) {
           },
           shopping: {
             hasShopped,
+            hasOrdered,
+            canOrder,
             totalSpent,
             remainingAmount: null, // Unlimited
             orderCount: existingOrders.length,
+            activeOrderCount: activeOrders.length,
             shoppingType: 'payment_proof_required'
           }
         });
@@ -144,6 +160,8 @@ export async function GET(request) {
         return NextResponse.json({
           success: true,
           eligible: false,
+          hasOrdered,
+          canOrder: false,
           reason: 'no_shopping_amount',
           message: 'Your package does not include shopping benefits. Upgrade your package to shop.',
           user: {
@@ -159,9 +177,12 @@ export async function GET(request) {
           },
           shopping: {
             hasShopped,
+            hasOrdered,
+            canOrder: false,
             totalSpent,
             remainingAmount: 0,
             orderCount: existingOrders.length,
+            activeOrderCount: activeOrders.length,
             shoppingType: 'no_shopping_allowed'
           }
         });
@@ -173,6 +194,8 @@ export async function GET(request) {
         return NextResponse.json({
           success: true,
           eligible: true,
+          hasOrdered,
+          canOrder,
           reason: isLimitConsumed ? 'limit_consumed' : 'package_shopping',
           message: isLimitConsumed 
             ? 'Your shopping limit has been consumed. You can shop by providing payment proof.'
@@ -190,9 +213,12 @@ export async function GET(request) {
           },
           shopping: {
             hasShopped,
+            hasOrdered,
+            canOrder,
             totalSpent,
             remainingAmount: Math.max(0, remainingAmount),
             orderCount: existingOrders.length,
+            activeOrderCount: activeOrders.length,
             shoppingType: isLimitConsumed ? 'payment_proof_required' : 'package_benefits'
           }
         });

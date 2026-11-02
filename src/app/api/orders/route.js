@@ -23,6 +23,26 @@ export async function POST(request) {
       );
     }
 
+    // Check if user has already placed an active order (one-time restriction)
+    const existingActiveOrder = await prisma.order.findFirst({
+      where: {
+        userId: parseInt(userId),
+        status: {
+          notIn: ['cancelled', 'rejected']
+        }
+      }
+    });
+
+    if (existingActiveOrder) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: 'You have already placed an order. Each user is restricted to one order.' 
+        }), 
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Check if user has active package
     const user = await prisma.user.findUnique({
       where: { id: parseInt(userId) },

@@ -66,6 +66,8 @@ export default function Checkout() {
         setShoppingEligibility({
           success: false,
           eligible: false,
+          hasOrdered: false,
+          canOrder: true,
           reason: 'error',
           message: 'Unable to check shopping eligibility'
         });
@@ -75,6 +77,8 @@ export default function Checkout() {
       setShoppingEligibility({
         success: false,
         eligible: false,
+        hasOrdered: false,
+        canOrder: true,
         reason: 'error',
         message: 'Unable to check shopping eligibility'
       });
@@ -82,6 +86,8 @@ export default function Checkout() {
       setEligibilityLoading(false);
     }
   };
+
+  const hasOrdered = Boolean(shoppingEligibility?.hasOrdered ?? shoppingEligibility?.shopping?.hasOrdered);
 
   const getSubtotal = () => {
     return cart.reduce((total, item) => {
@@ -101,42 +107,28 @@ export default function Checkout() {
     }));
   };
 
-  const handlePaymentProofUpload = async (e) => {
+  const handlePaymentProofUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Only allow images for now (server route expects data:image/*)
-    if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file (JPG, PNG).');
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB limit. Please upload a smaller file.');
       return;
     }
 
+    // Convert file to base64
     const reader = new FileReader();
-    reader.onload = async (event) => {
+    reader.onload = () => {
       try {
-        const base64 = event.target.result;
-
-        // Upload to server to get a URL instead of storing large base64 in DB
-        const uploadRes = await fetch('/api/upload-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: base64 })
-        });
-
-        if (!uploadRes.ok) {
-          throw new Error('Upload failed');
-        }
-
-        const uploadJson = await uploadRes.json();
-        const imageUrl = uploadJson.url;
-
-        setPaymentProof(imageUrl);
+        const base64String = reader.result;
+        setPaymentProof(base64String);
         setPaymentData(prev => ({
           ...prev,
-          image: imageUrl
+          image: base64String
         }));
-      } catch (err) {
-        console.error('Payment proof upload error:', err);
+      } catch (error) {
+        console.error('Error converting file to base64:', error);
         alert('Failed to upload payment proof. Please try again.');
       }
     };
@@ -153,6 +145,10 @@ export default function Checkout() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (hasOrdered) {
+      return;
+    }
+
     // Validate form
     if (!formData.firstName || !formData.lastName || !formData.email || 
         !formData.phone || !formData.address || !formData.city || 
@@ -220,7 +216,8 @@ export default function Checkout() {
           alert('Failed to place order: ' + result.message);
         }
       } else {
-        alert('Failed to place order. Please try again.');
+        const errorData = await response.json().catch(() => ({}));
+        alert(errorData.message || 'Failed to place order. Please try again.');
       }
       
     } catch (error) {
@@ -556,9 +553,14 @@ export default function Checkout() {
             {/* Place Order Button */}
             <button
               onClick={handleSubmit}
-              className="w-full py-2 md:py-3 px-3 md:px-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-medium hover:from-green-700 hover:to-green-800 transition-all duration-200 text-sm md:text-base"
+              disabled={hasOrdered}
+              className={`w-full py-2 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all duration-200 text-sm md:text-base ${
+                hasOrdered
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800'
+              }`}
             >
-              Place Order
+              {hasOrdered ? 'Already Ordered' : 'Place Order'}
             </button>
 
             <div className="mt-3 md:mt-4 text-center">
