@@ -37,8 +37,6 @@ export default function Cart() {
     }
   };
 
-  const hasOrdered = Boolean(shoppingEligibility?.hasOrdered ?? shoppingEligibility?.shopping?.hasOrdered);
-
   const updateQuantity = (productId, newQuantity) => {
     if (newQuantity <= 0) {
       removeFromCart(productId);
@@ -105,9 +103,6 @@ export default function Cart() {
   };
 
   const handleCheckout = () => {
-    if (hasOrdered) {
-      return;
-    }
     // Redirect to checkout page
     window.location.href = '/user-dashboard/checkout';
   };
@@ -164,48 +159,44 @@ export default function Cart() {
           </Link>
         </div>
       ) : (
-        /* Cart Items */
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6">
+          {/* Cart Items */}
           <div className="lg:col-span-2 space-y-3 md:space-y-4">
             {cart.map((item) => (
-              <div key={item.id} className="bg-gray-800 rounded-xl p-3 md:p-4 border border-gray-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4">
-                {/* Product Info */}
-                <div className="flex items-center space-x-3 md:space-x-4 w-full sm:w-auto">
-                  <div className="relative w-12 h-12 md:w-16 md:h-16 bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">
+              <div key={item.id} className="bg-gray-800 rounded-xl p-3 md:p-6 border border-gray-700">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-4">
+                  {/* Product Image */}
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">
                     <Image
                       src={item.image}
                       alt={item.title}
-                      fill
-                      className="object-cover"
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
                       onError={(e) => {
                         e.target.src = '/placeholder-product.jpg';
                       }}
                     />
                   </div>
-                  <div className="min-w-0 flex-1 sm:flex-initial">
-                    <h3 className="text-white font-medium text-sm md:text-base truncate">{item.title}</h3>
-                    <p className="text-gray-400 text-xs md:text-sm">
-                      PKR {parseFloat(item.sale_price || item.price).toFixed(2)} each
-                    </p>
-                  </div>
-                </div>
 
-                {/* Price and Controls */}
-                <div className="flex items-center justify-between w-full sm:w-auto sm:space-x-4">
-                  {/* Price breakdown */}
-                  <div className="text-left sm:text-right">
-                    <div className="flex flex-col">
-                      {item.discount ? (
+                  {/* Product Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white font-semibold mb-1 text-sm md:text-base truncate">{item.title}</h3>
+                    <p className="text-gray-400 text-xs md:text-sm mb-2 line-clamp-2">{item.description}</p>
+                    
+                    {/* Price */}
+                    <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                      {item.sale_price ? (
                         <>
-                          <span className="text-sm md:text-base font-bold text-white">
+                          <span className="text-sm md:text-lg font-bold text-white">
                             PKR {parseFloat(item.sale_price).toFixed(2)}
                           </span>
-                          <span className="text-xs text-gray-400 line-through">
+                          <span className="text-xs md:text-sm text-gray-400 line-through">
                             PKR {parseFloat(item.price).toFixed(2)}
                           </span>
                         </>
                       ) : (
-                        <span className="text-sm md:text-base font-bold text-white">
+                        <span className="text-sm md:text-lg font-bold text-white">
                           PKR {parseFloat(item.price).toFixed(2)}
                         </span>
                       )}
@@ -281,14 +272,9 @@ export default function Cart() {
 
               <button
                 onClick={handleCheckout}
-                disabled={hasOrdered}
-                className={`w-full py-2 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all duration-200 text-sm md:text-base ${
-                  hasOrdered
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800'
-                }`}
+                className="w-full py-2 md:py-3 px-3 md:px-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-medium hover:from-green-700 hover:to-green-800 transition-all duration-200 text-sm md:text-base"
               >
-                {hasOrdered ? 'Already Ordered' : 'Proceed to Checkout'}
+                Proceed to Checkout
               </button>
 
               <div className="mt-3 md:mt-4 text-center">
@@ -303,3 +289,5 @@ export default function Cart() {
     </div>
   );
 }
+
+

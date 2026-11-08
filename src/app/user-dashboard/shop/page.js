@@ -74,8 +74,6 @@ export default function Shop() {
         setShoppingEligibility({
           success: false,
           eligible: false,
-          hasOrdered: false,
-          canOrder: true,
           reason: 'error',
           message: 'Unable to check shopping eligibility'
         });
@@ -85,8 +83,6 @@ export default function Shop() {
       setShoppingEligibility({
         success: false,
         eligible: false,
-        hasOrdered: false,
-        canOrder: true,
         reason: 'error',
         message: 'Unable to check shopping eligibility'
       });
@@ -95,15 +91,8 @@ export default function Shop() {
     }
   };
 
-  const hasOrdered = Boolean(shoppingEligibility?.hasOrdered ?? shoppingEligibility?.shopping?.hasOrdered);
-
   const addToCart = (product) => {
     try {
-      // If user has already placed an order, restriction is in place
-      if (hasOrdered) {
-        return;
-      }
-
       // Check if shopping is not allowed (Student package with 0 shopping amount)
       if (shoppingEligibility && !shoppingEligibility.eligible) {
         alert(
@@ -264,23 +253,6 @@ export default function Shop() {
         </div>
       )}
 
-      {/* Warning for users with package but no shopping amount (Student package) */}
-      {!eligibilityLoading && shoppingEligibility && shoppingEligibility.shopping && shoppingEligibility.shopping.shoppingType === 'no_shopping_allowed' && (
-        <div className="bg-gradient-to-r from-red-900 to-orange-900 rounded-xl p-4 md:p-6 border border-red-700">
-          <div className="flex items-start space-x-3">
-            <svg className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-white mb-1">Shopping Not Available</h3>
-              <p className="text-sm text-gray-300">
-                Your current package ({shoppingEligibility.package?.name}) does not include shopping benefits.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Shopping Amount Display */}
       {!eligibilityLoading && shoppingEligibility && shoppingEligibility.shopping && shoppingEligibility.shopping.shoppingType === 'package_benefits' && shoppingEligibility.shopping.remainingAmount !== null && (
         <div className="bg-gradient-to-r from-blue-900 to-purple-900 rounded-xl p-4 md:p-6 border border-blue-700">
@@ -377,6 +349,25 @@ export default function Shop() {
         </div>
       )}
 
+      {/* Warning for users with package but no shopping amount (Student package) */}
+      {!eligibilityLoading && shoppingEligibility && shoppingEligibility.shopping && shoppingEligibility.shopping.shoppingType === 'no_shopping_allowed' && (
+        <div className="bg-gradient-to-r from-red-900 to-orange-900 rounded-xl p-4 md:p-6 border border-red-700">
+          <div className="flex items-start space-x-3">
+            <svg className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-white mb-1">Shopping Not Available</h3>
+              <p className="text-sm text-gray-300">
+                Your current package ({shoppingEligibility.package?.name}) does not include shopping benefits.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Info for users without package or with payment proof - removed per request */}
+
       {/* Search and Filters */}
       <div className="bg-gray-800 rounded-xl p-3 md:p-6 border border-gray-700">
         <div className="flex-1">
@@ -437,19 +428,12 @@ export default function Shop() {
                 </div>
               </div>
 
-              {/* Action Button */}
+              {/* Action Button - No Restrictions */}
               <button
                 onClick={() => addToCart(product)}
-                disabled={hasOrdered}
-                className={`w-full py-1.5 md:py-2 px-2 md:px-4 rounded-lg font-medium transition-colors duration-200 text-xs md:text-base ${
-                  hasOrdered
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
+                className="w-full py-1.5 md:py-2 px-2 md:px-4 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 text-xs md:text-base"
               >
-                {hasOrdered
-                  ? 'Already Ordered'
-                  : (shoppingEligibility?.shopping?.shoppingType === 'payment_proof_required' ? 'Add to Cart (Payment Proof)' : 'Add to Cart')}
+                {shoppingEligibility?.shopping?.shoppingType === 'payment_proof_required' ? 'Add to Cart (Payment Proof)' : 'Add to Cart'}
               </button>
             </div>
           </div>
@@ -466,6 +450,8 @@ export default function Shop() {
           <p className="text-gray-400 text-sm md:text-base">Try adjusting your search or filter criteria</p>
         </div>
       )}
+
+      
 
       {/* Shopping Benefits */}
       <div className="bg-gray-800 rounded-xl p-3 md:p-6 border border-gray-700">
@@ -511,3 +497,5 @@ export default function Shop() {
     </div>
   );
 }
+
+
