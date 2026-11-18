@@ -129,16 +129,24 @@ export async function POST(req) {
     
     // Build cookie string with proper production settings
     let cookieString = `auth-token=${token}; HttpOnly; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}; Path=/`;
+    let clearAdminCookie = `admin-token=; HttpOnly; SameSite=Strict; Max-Age=0; Path=/`;
     
     // Only add Secure flag if we're actually on HTTPS
     if (isProduction) {
       cookieString += '; Secure';
+      clearAdminCookie += '; Secure';
     }
     
     // Add domain if specified
     if (domain) {
       cookieString += `; Domain=${domain}`;
+      clearAdminCookie += `; Domain=${domain}`;
     }
+
+    const headers = new Headers();
+    headers.set('Content-Type', 'application/json');
+    headers.append('Set-Cookie', cookieString);
+    headers.append('Set-Cookie', clearAdminCookie);
 
     const response = new Response(
       JSON.stringify({
@@ -149,10 +157,7 @@ export async function POST(req) {
       }),
       {
         status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Set-Cookie': cookieString
-        }
+        headers
       }
     );
 
@@ -203,11 +208,11 @@ export async function DELETE(req) {
     console.error('Logout error:', error);
     
     return new Response(
-      JSON.stringify({
+      JSON.stringify({ 
         success: false,
-        message: 'An error occurred during logout'
-      }),
-      {
+        message: 'An error occurred during logout' 
+      }), 
+      { 
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       }

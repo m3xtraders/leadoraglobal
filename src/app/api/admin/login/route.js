@@ -99,7 +99,7 @@ export async function POST(req) {
       data: { lastLoginAt: new Date() }
     });
 
-    // Create admin session record
+    // Create session record in database
     try {
       await prisma.adminSession.create({
         data: {
@@ -108,12 +108,13 @@ export async function POST(req) {
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
         }
       });
+      console.log('Admin session record created successfully');
     } catch (sessionError) {
       console.warn('Failed to create admin session record:', sessionError);
       // Continue with login even if session creation fails
     }
 
-    // Prepare admin data for response (exclude sensitive information)
+    // Prepare admin data for response (exclude password)
     const adminData = {
       id: admin.id,
       username: admin.username,
@@ -131,16 +132,24 @@ export async function POST(req) {
     
     // Build cookie string with proper production settings
     let cookieString = `admin-token=${token}; HttpOnly; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}; Path=/`;
+    let clearUserCookie = `auth-token=; HttpOnly; SameSite=Strict; Max-Age=0; Path=/`;
     
     // Only add Secure flag if we're actually on HTTPS
     if (isProduction) {
       cookieString += '; Secure';
+      clearUserCookie += '; Secure';
     }
     
     // Add domain if specified
     if (domain) {
       cookieString += `; Domain=${domain}`;
+      clearUserCookie += `; Domain=${domain}`;
     }
+
+    const headers = new Headers();
+    headers.set('Content-Type', 'application/json');
+    headers.append('Set-Cookie', cookieString);
+    headers.append('Set-Cookie', clearUserCookie);
 
     const response = new Response(
       JSON.stringify({
@@ -151,10 +160,7 @@ export async function POST(req) {
       }),
       {
         status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Set-Cookie': cookieString
-        }
+        headers
       }
     );
 
@@ -219,16 +225,14 @@ export async function DELETE(req) {
     console.error('Admin logout error:', error);
     
     return new Response(
-      JSON.stringify({
+      JSON.stringify({ 
         success: false,
-        message: 'An error occurred during logout'
-      }),
-      {
+        message: 'An error occurred during logout' 
+      }), 
+      { 
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       }
     );
   }
 }
-
-
