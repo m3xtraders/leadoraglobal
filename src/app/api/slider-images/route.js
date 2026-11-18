@@ -3,6 +3,19 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 200,
+    headers: corsHeaders,
+  });
+}
+
 // GET - Fetch active slider images for public use
 export async function GET() {
   try {
@@ -24,16 +37,16 @@ export async function GET() {
       }
     });
 
-    return NextResponse.json({
-      success: true,
-      data: sliderImages
-    });
+    return NextResponse.json(
+      { success: true, data: sliderImages },
+      { headers: corsHeaders }
+    );
 
   } catch (error) {
     console.error('Error fetching slider images:', error);
     return NextResponse.json(
       { error: 'Failed to fetch slider images' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   } finally {
     await prisma.$disconnect();

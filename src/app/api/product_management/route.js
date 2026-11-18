@@ -28,6 +28,19 @@ export async function POST(req) {
   }
 }
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 200,
+    headers: corsHeaders,
+  });
+}
+
 export async function GET(req) {
   try {
     console.log('Product management API called');
@@ -51,9 +64,21 @@ export async function GET(req) {
     }))
     
     console.log('Transformed products:', transformedProducts);
-    return new Response(JSON.stringify({ products: transformedProducts }), { status: 200 })
+    return new Response(JSON.stringify({ products: transformedProducts }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
   } catch (err) {
     console.error('Error in product management API:', err)
-    return new Response(JSON.stringify({ message: 'Server error' }), { status: 500 })
+    return new Response(JSON.stringify({ message: 'Server error' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
   }
 }
